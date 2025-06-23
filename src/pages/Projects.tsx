@@ -3,15 +3,20 @@ import { Search, Filter, Plus, Users, Calendar, Tag, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Card from '../components/UI/Card';
 import Button from '../components/UI/Button';
+import ProjectCard from '../components/Projects/ProjectCard';
+import CreateProjectModal from '../components/Projects/CreateProjectModal';
 import { mockProjects } from '../data/mockData';
+import { Project } from '../types';
 
 const Projects: React.FC = () => {
   const { user } = useAuth();
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const categories = ['all', 'Intelligence Artificielle', 'Développement Mobile', 'Sciences', 'Informatique'];
+  const categories = ['all', 'Intelligence Artificielle', 'Développement Mobile', 'Sciences', 'Informatique', 'Biotechnologie', 'Robotique', 'Cybersécurité', 'Data Science'];
   const statuses = ['all', 'active', 'completed', 'paused'];
 
   const getStatusLabel = (status: string) => {
@@ -23,16 +28,7 @@ const Projects: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-success-100 text-success-800';
-      case 'completed': return 'bg-primary-100 text-primary-800';
-      case 'paused': return 'bg-neutral-100 text-neutral-800';
-      default: return 'bg-neutral-100 text-neutral-800';
-    }
-  };
-
-  const filteredProjects = mockProjects.filter(project => {
+  const filteredProjects = projects.filter(project => {
     const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          project.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || project.category === selectedCategory;
@@ -40,6 +36,35 @@ const Projects: React.FC = () => {
     
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  const handleCreateProject = (projectData: any) => {
+    const newProject: Project = {
+      id: Date.now().toString(),
+      ...projectData,
+      resources: []
+    };
+    
+    setProjects(prev => [newProject, ...prev]);
+  };
+
+  const handleJoinProject = (projectId: string) => {
+    if (!user) return;
+    
+    setProjects(prev => prev.map(project => {
+      if (project.id === projectId && !project.participants.some(p => p.id === user.id)) {
+        return {
+          ...project,
+          participants: [...project.participants, user]
+        };
+      }
+      return project;
+    }));
+  };
+
+  const handleViewProject = (projectId: string) => {
+    // Ici vous pourriez naviguer vers une page de détail du projet
+    console.log('Voir le projet:', projectId);
+  };
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -51,8 +76,11 @@ const Projects: React.FC = () => {
               <h1 className="text-3xl font-bold text-neutral-900 mb-2">Projets Collaboratifs</h1>
               <p className="text-neutral-600">Découvrez et participez aux projets de la communauté ESST</p>
             </div>
-            {user && (user.userType === 'teacher' || user.userType === 'admin') && (
-              <Button className="flex items-center space-x-2">
+            {user && (user.userType === 'teacher' || user.userType === 'admin' || user.userType === 'student') && (
+              <Button 
+                className="flex items-center space-x-2"
+                onClick={() => setIsCreateModalOpen(true)}
+              >
                 <Plus size={20} />
                 <span>Nouveau Projet</span>
               </Button>
@@ -112,103 +140,12 @@ const Projects: React.FC = () => {
         {/* Projects Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredProjects.map((project) => (
-            <Card key={project.id} className="hover:shadow-lg transition-all duration-200" hover>
-              <div className="space-y-4">
-                {/* Project Header */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
-                        {getStatusLabel(project.status)}
-                      </span>
-                      <span className="text-xs text-neutral-500">
-                        {project.createdAt.toLocaleDateString('fr-FR')}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-bold text-neutral-900 mb-2 line-clamp-2">
-                      {project.title}
-                    </h3>
-                  </div>
-                </div>
-
-                {/* Project Description */}
-                <p className="text-neutral-700 text-sm line-clamp-3 leading-relaxed">
-                  {project.description}
-                </p>
-
-                {/* Category */}
-                <div className="flex items-center space-x-2">
-                  <Tag size={16} className="text-primary-900" />
-                  <span className="text-sm font-medium text-primary-900">
-                    {project.category}
-                  </span>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2">
-                  {project.tags.slice(0, 3).map((tag, index) => (
-                    <span 
-                      key={index}
-                      className="bg-neutral-100 text-neutral-700 text-xs px-2 py-1 rounded-full"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {project.tags.length > 3 && (
-                    <span className="bg-neutral-100 text-neutral-700 text-xs px-2 py-1 rounded-full">
-                      +{project.tags.length - 3}
-                    </span>
-                  )}
-                </div>
-
-                {/* Participants */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Users size={16} className="text-neutral-600" />
-                    <div className="flex -space-x-2">
-                      {project.participants.slice(0, 4).map((participant, index) => (
-                        <div 
-                          key={participant.id}
-                          className="w-8 h-8 bg-primary-900 rounded-full border-2 border-white flex items-center justify-center"
-                          title={`${participant.firstName} ${participant.lastName}`}
-                        >
-                          <span className="text-white text-xs font-medium">
-                            {participant.firstName[0]}{participant.lastName[0]}
-                          </span>
-                        </div>
-                      ))}
-                      {project.participants.length > 4 && (
-                        <div className="w-8 h-8 bg-neutral-400 rounded-full border-2 border-white flex items-center justify-center">
-                          <span className="text-white text-xs">
-                            +{project.participants.length - 4}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-sm text-neutral-600 ml-2">
-                      {project.participants.length} participant{project.participants.length > 1 ? 's' : ''}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-neutral-200">
-                  <div className="flex items-center space-x-2 text-sm text-neutral-600">
-                    <Calendar size={16} />
-                    <span>Créé le {project.createdAt.toLocaleDateString('fr-FR')}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm" className="flex items-center space-x-1">
-                      <Eye size={16} />
-                      <span>Voir</span>
-                    </Button>
-                    <Button size="sm">
-                      Rejoindre
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            <ProjectCard
+              key={project.id}
+              project={project}
+              onJoin={handleJoinProject}
+              onView={handleViewProject}
+            />
           ))}
         </div>
 
@@ -246,7 +183,7 @@ const Projects: React.FC = () => {
           <Card className="text-center">
             <div className="space-y-2">
               <div className="text-2xl font-bold text-primary-900">
-                {mockProjects.length}
+                {projects.length}
               </div>
               <div className="text-neutral-600">Projets au total</div>
             </div>
@@ -254,7 +191,7 @@ const Projects: React.FC = () => {
           <Card className="text-center">
             <div className="space-y-2">
               <div className="text-2xl font-bold text-success-900">
-                {mockProjects.filter(p => p.status === 'active').length}
+                {projects.filter(p => p.status === 'active').length}
               </div>
               <div className="text-neutral-600">Projets actifs</div>
             </div>
@@ -262,12 +199,19 @@ const Projects: React.FC = () => {
           <Card className="text-center">
             <div className="space-y-2">
               <div className="text-2xl font-bold text-secondary-900">
-                {Array.from(new Set(mockProjects.flatMap(p => p.participants.map(participant => participant.id)))).length}
+                {Array.from(new Set(projects.flatMap(p => p.participants.map(participant => participant.id)))).length}
               </div>
               <div className="text-neutral-600">Participants uniques</div>
             </div>
           </Card>
         </div>
+
+        {/* Create Project Modal */}
+        <CreateProjectModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSubmit={handleCreateProject}
+        />
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import Footer from './components/Layout/Footer';
 import Sidebar from './components/Layout/Sidebar';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Messaging from './pages/Messaging';
 import Projects from './pages/Projects';
@@ -66,6 +67,7 @@ const AppContent: React.FC = () => {
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/formations" element={<Formations />} />
           
           {/* Protected Routes */}
