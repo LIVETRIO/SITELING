@@ -1,51 +1,101 @@
-import React, { useState } from 'react';
-import { Search, Send, Paperclip, MoreVertical, Phone, Video } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Phone, Video, MoreVertical, Users, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Card from '../components/UI/Card';
 import Button from '../components/UI/Button';
+import MessageBubble from '../components/Messaging/MessageBubble';
+import MessageInput from '../components/Messaging/MessageInput';
 import { mockConversations, mockUsers } from '../data/mockData';
 import { Conversation, Message } from '../types';
 
 const Messaging: React.FC = () => {
   const { user } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [newMessage, setNewMessage] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Mock messages for the selected conversation
-  const mockMessages: Message[] = [
-    {
-      id: '1',
-      conversationId: selectedConversation?.id || '1',
-      senderId: '2',
-      content: 'Bonjour Sophie, avez-vous avancé sur le projet final ?',
-      timestamp: new Date(Date.now() - 1800000), // 30 min ago
-      isRead: true,
-    },
-    {
-      id: '2',
-      conversationId: selectedConversation?.id || '1',
-      senderId: user?.id || '3',
-      content: 'Bonjour Professeur, oui j\'ai terminé la première partie.',
-      timestamp: new Date(Date.now() - 1500000), // 25 min ago
-      isRead: true,
-    },
-    {
-      id: '3',
-      conversationId: selectedConversation?.id || '1',
-      senderId: '2',
-      content: 'Très bien. Pourriez-vous me l\'envoyer pour révision ?',
-      timestamp: new Date(Date.now() - 300000), // 5 min ago
-      isRead: false,
-    },
-  ];
+  const generateMockMessages = (conversationId: string): Message[] => {
+    return [
+      {
+        id: '1',
+        conversationId,
+        senderId: '2',
+        content: 'Bonjour ! Comment avancez-vous sur le projet final ?',
+        timestamp: new Date(Date.now() - 1800000), // 30 min ago
+        isRead: true,
+      },
+      {
+        id: '2',
+        conversationId,
+        senderId: user?.id || '3',
+        content: 'Bonjour Professeur ! J\'ai terminé la première partie et je travaille actuellement sur l\'implémentation de l\'algorithme.',
+        timestamp: new Date(Date.now() - 1500000), // 25 min ago
+        isRead: true,
+      },
+      {
+        id: '3',
+        conversationId,
+        senderId: '2',
+        content: 'Excellent ! Pourriez-vous me l\'envoyer pour révision ? J\'aimerais voir votre approche.',
+        timestamp: new Date(Date.now() - 1200000), // 20 min ago
+        isRead: true,
+      },
+      {
+        id: '4',
+        conversationId,
+        senderId: user?.id || '3',
+        content: 'Bien sûr ! Je vous l\'envoie dans quelques minutes. J\'ai aussi quelques questions sur la partie théorique.',
+        timestamp: new Date(Date.now() - 900000), // 15 min ago
+        isRead: true,
+      },
+      {
+        id: '5',
+        conversationId,
+        senderId: '2',
+        content: 'Parfait ! N\'hésitez pas à me poser toutes vos questions. Je suis disponible cet après-midi pour en discuter.',
+        timestamp: new Date(Date.now() - 300000), // 5 min ago
+        isRead: false,
+      },
+    ];
+  };
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() && selectedConversation) {
-      // In a real app, this would send the message to the server
-      console.log('Sending message:', newMessage);
-      setNewMessage('');
+  useEffect(() => {
+    if (selectedConversation) {
+      setMessages(generateMockMessages(selectedConversation.id));
     }
+  }, [selectedConversation, user?.id]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleSendMessage = (content: string) => {
+    if (!selectedConversation || !user) return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      conversationId: selectedConversation.id,
+      senderId: user.id,
+      content,
+      timestamp: new Date(),
+      isRead: false,
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+
+    // Update conversation's last message
+    setConversations(prev => prev.map(conv => 
+      conv.id === selectedConversation.id 
+        ? { ...conv, lastMessage: newMessage }
+        : conv
+    ));
   };
 
   const getOtherParticipant = (conversation: Conversation) => {
@@ -53,7 +103,7 @@ const Messaging: React.FC = () => {
     return conversation.participants.find(p => p.id !== user?.id);
   };
 
-  const filteredConversations = mockConversations.filter(conversation => {
+  const filteredConversations = conversations.filter(conversation => {
     if (!searchQuery) return true;
     
     const searchTerm = searchQuery.toLowerCase();
@@ -65,6 +115,19 @@ const Messaging: React.FC = () => {
         `${otherParticipant.firstName} ${otherParticipant.lastName}`.toLowerCase().includes(searchTerm);
     }
   });
+
+  const markAsRead = (conversationId: string) => {
+    setConversations(prev => prev.map(conv => 
+      conv.id === conversationId 
+        ? { ...conv, unreadCount: 0 }
+        : conv
+    ));
+  };
+
+  const handleSelectConversation = (conversation: Conversation) => {
+    setSelectedConversation(conversation);
+    markAsRead(conversation.id);
+  };
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -93,13 +156,14 @@ const Messaging: React.FC = () => {
 
             {/* New Message Button */}
             <div className="p-4 border-b border-neutral-200">
-              <Button className="w-full">
-                Nouveau Message
+              <Button className="w-full flex items-center justify-center space-x-2">
+                <Plus size={20} />
+                <span>Nouveau Message</span>
               </Button>
             </div>
 
             {/* Conversations Header */}
-            <div className="p-4 border-b border-neutral-200">
+            <div className="p-4 border-b border-neutral-200 bg-neutral-50">
               <h3 className="font-semibold text-neutral-900">Conversations</h3>
             </div>
 
@@ -112,7 +176,7 @@ const Messaging: React.FC = () => {
                 return (
                   <div
                     key={conversation.id}
-                    onClick={() => setSelectedConversation(conversation)}
+                    onClick={() => handleSelectConversation(conversation)}
                     className={`
                       p-4 border-b border-neutral-100 cursor-pointer transition-all duration-200
                       ${isSelected 
@@ -156,7 +220,7 @@ const Messaging: React.FC = () => {
                             {conversation.lastMessage?.content}
                           </p>
                           {conversation.unreadCount > 0 && (
-                            <span className="bg-primary-900 text-white text-xs rounded-full px-2 py-1 ml-2">
+                            <span className="bg-primary-900 text-white text-xs rounded-full px-2 py-1 ml-2 flex-shrink-0">
                               {conversation.unreadCount}
                             </span>
                           )}
@@ -198,7 +262,10 @@ const Messaging: React.FC = () => {
                               })()
                           }
                         </h3>
-                        <p className="text-sm text-success-600">En ligne</p>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-success-500 rounded-full"></div>
+                          <p className="text-sm text-success-600">En ligne</p>
+                        </div>
                       </div>
                     </div>
                     
@@ -209,6 +276,11 @@ const Messaging: React.FC = () => {
                       <button className="p-2 hover:bg-neutral-200 rounded-lg transition-colors duration-200">
                         <Video size={20} className="text-neutral-600" />
                       </button>
+                      {selectedConversation.isGroup && (
+                        <button className="p-2 hover:bg-neutral-200 rounded-lg transition-colors duration-200">
+                          <Users size={20} className="text-neutral-600" />
+                        </button>
+                      )}
                       <button className="p-2 hover:bg-neutral-200 rounded-lg transition-colors duration-200">
                         <MoreVertical size={20} className="text-neutral-600" />
                       </button>
@@ -217,71 +289,32 @@ const Messaging: React.FC = () => {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {mockMessages.map((message) => {
+                <div className="flex-1 overflow-y-auto p-4">
+                  {messages.map((message) => {
                     const isOwn = message.senderId === user?.id;
                     const sender = mockUsers.find(u => u.id === message.senderId);
                     
                     return (
-                      <div
+                      <MessageBubble
                         key={message.id}
-                        className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div className={`max-w-xs lg:max-w-md space-y-1`}>
-                          <div
-                            className={`
-                              px-4 py-3 rounded-2xl
-                              ${isOwn 
-                                ? 'bg-primary-900 text-white' 
-                                : 'bg-neutral-100 text-neutral-900'
-                              }
-                            `}
-                          >
-                            <p className="text-sm">{message.content}</p>
-                          </div>
-                          <p className={`text-xs text-neutral-500 ${isOwn ? 'text-right' : 'text-left'}`}>
-                            {isOwn ? 'Vous' : sender?.firstName} • {message.timestamp.toLocaleTimeString('fr-FR', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                      </div>
+                        message={message}
+                        sender={sender}
+                        isOwn={isOwn}
+                        showAvatar={selectedConversation.isGroup}
+                      />
                     );
                   })}
+                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Message Input */}
-                <div className="p-4 border-t border-neutral-200 bg-neutral-50">
-                  <div className="flex items-center space-x-3">
-                    <button className="p-2 hover:bg-neutral-200 rounded-lg transition-colors duration-200">
-                      <Paperclip size={20} className="text-neutral-600" />
-                    </button>
-                    <div className="flex-1 relative">
-                      <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                        placeholder="Votre message..."
-                        className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      />
-                    </div>
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!newMessage.trim()}
-                      className="px-4 py-3"
-                    >
-                      <Send size={20} />
-                    </Button>
-                  </div>
-                </div>
+                <MessageInput onSendMessage={handleSendMessage} />
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center space-y-4">
                   <div className="w-16 h-16 bg-neutral-200 rounded-full flex items-center justify-center mx-auto">
-                    <MessageSquare size={32} className="text-neutral-400" />
+                    <Users size={32} className="text-neutral-400" />
                   </div>
                   <div>
                     <h3 className="text-lg font-medium text-neutral-900">
