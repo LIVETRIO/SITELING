@@ -12,6 +12,9 @@ import Messaging from './pages/Messaging';
 import Projects from './pages/Projects';
 import CMS from './pages/CMS';
 import Formations from './pages/Formations';
+import ContentEditor from './pages/admin/ContentEditor';
+import SiteSettings from './pages/admin/SiteSettings';
+import MediaLibrary from './pages/admin/MediaLibrary';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -91,6 +94,21 @@ const AppContent: React.FC = () => {
           <Route path="/admin/cms" element={
             <AdminRoute>
               <CMS />
+            </AdminRoute>
+          } />
+          <Route path="/admin/cms/editor/:id" element={
+            <AdminRoute>
+              <ContentEditor />
+            </AdminRoute>
+          } />
+          <Route path="/admin/settings" element={
+            <AdminRoute>
+              <SiteSettings />
+            </AdminRoute>
+          } />
+          <Route path="/admin/media" element={
+            <AdminRoute>
+              <MediaLibrary />
             </AdminRoute>
           } />
           

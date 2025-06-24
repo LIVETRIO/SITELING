@@ -22,7 +22,9 @@ import {
   Archive,
   Award,
   Clock,
-  MapPin
+  MapPin,
+  Image,
+  Palette
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -54,8 +56,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           { icon: Bell, label: 'Actualités', path: '/admin/cms/news' },
           { icon: Calendar, label: 'Événements', path: '/admin/cms/events' },
           { icon: GraduationCap, label: 'Formations', path: '/admin/cms/formations' },
-          { icon: Archive, label: 'Médias', path: '/admin/cms/media' },
-          { icon: Plus, label: 'Nouveau contenu', path: '/admin/cms/create' },
+          { icon: Image, label: 'Médias', path: '/admin/media' },
+          { icon: Plus, label: 'Nouveau contenu', path: '/admin/cms/editor/new' },
         ]
       },
       { 
@@ -98,6 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         path: '/admin/settings',
         submenu: [
           { icon: Settings, label: 'Configuration générale', path: '/admin/settings/general' },
+          { icon: Palette, label: 'Apparence', path: '/admin/settings/appearance' },
           { icon: Users, label: 'Droits et permissions', path: '/admin/settings/permissions' },
           { icon: Bell, label: 'Notifications', path: '/admin/settings/notifications' },
           { icon: Archive, label: 'Sauvegarde', path: '/admin/settings/backup' },

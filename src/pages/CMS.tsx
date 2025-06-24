@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Plus, Edit, Trash2, Eye, Filter } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, Plus, Edit, Trash2, Eye, Filter, Settings, Image } from 'lucide-react';
 import Card from '../components/UI/Card';
 import Button from '../components/UI/Button';
 import { mockPages } from '../data/mockData';
@@ -12,12 +13,12 @@ const CMS: React.FC = () => {
   const [sectionFilter, setSectionFilter] = useState('all');
 
   const tabs = [
-    { id: 'pages', label: 'Pages', count: mockPages.length },
-    { id: 'news', label: 'Actualités', count: 15 },
-    { id: 'events', label: 'Événements', count: 8 },
-    { id: 'formations', label: 'Formations', count: 12 },
-    { id: 'media', label: 'Médias', count: 45 },
-    { id: 'settings', label: 'Paramètres', count: 0 },
+    { id: 'pages', label: 'Pages', count: mockPages.length, icon: Edit },
+    { id: 'news', label: 'Actualités', count: 15, icon: Edit },
+    { id: 'events', label: 'Événements', count: 8, icon: Edit },
+    { id: 'formations', label: 'Formations', count: 12, icon: Edit },
+    { id: 'media', label: 'Médias', count: 45, icon: Image },
+    { id: 'settings', label: 'Paramètres', count: 0, icon: Settings },
   ];
 
   const statuses = ['all', 'published', 'draft', 'review'];
@@ -49,6 +50,14 @@ const CMS: React.FC = () => {
     return matchesSearch && matchesStatus && matchesSection;
   });
 
+  const getTabLink = (tabId: string) => {
+    switch (tabId) {
+      case 'media': return '/admin/media';
+      case 'settings': return '/admin/settings';
+      default: return '/admin/cms';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -59,10 +68,26 @@ const CMS: React.FC = () => {
               <h1 className="text-3xl font-bold text-neutral-900 mb-2">Gestion du Contenu</h1>
               <p className="text-neutral-600">Administrez le contenu de la plateforme ESST</p>
             </div>
-            <Button className="flex items-center space-x-2">
-              <Plus size={20} />
-              <span>Nouveau Contenu</span>
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Link to="/admin/media">
+                <Button variant="ghost" className="flex items-center space-x-2">
+                  <Image size={20} />
+                  <span>Bibliothèque Média</span>
+                </Button>
+              </Link>
+              <Link to="/admin/settings">
+                <Button variant="ghost" className="flex items-center space-x-2">
+                  <Settings size={20} />
+                  <span>Paramètres</span>
+                </Button>
+              </Link>
+              <Link to="/admin/cms/editor/new">
+                <Button className="flex items-center space-x-2">
+                  <Plus size={20} />
+                  <span>Nouveau Contenu</span>
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -76,33 +101,62 @@ const CMS: React.FC = () => {
               
               <nav className="p-4">
                 <ul className="space-y-2">
-                  {tabs.map((tab) => (
-                    <li key={tab.id}>
-                      <button
-                        onClick={() => setSelectedTab(tab.id)}
-                        className={`
-                          w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-all duration-200
-                          ${selectedTab === tab.id
-                            ? 'bg-primary-900 text-white shadow-md'
-                            : 'text-neutral-700 hover:bg-neutral-100 hover:text-primary-900'
-                          }
-                        `}
-                      >
-                        <span className="font-medium">{tab.label}</span>
-                        {tab.count > 0 && (
-                          <span className={`
-                            text-xs px-2 py-1 rounded-full
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isExternal = ['media', 'settings'].includes(tab.id);
+                    
+                    if (isExternal) {
+                      return (
+                        <li key={tab.id}>
+                          <Link
+                            to={getTabLink(tab.id)}
+                            className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-all duration-200 text-neutral-700 hover:bg-neutral-100 hover:text-primary-900"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <Icon size={20} />
+                              <span className="font-medium">{tab.label}</span>
+                            </div>
+                            {tab.count > 0 && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-neutral-200 text-neutral-600">
+                                {tab.count}
+                              </span>
+                            )}
+                          </Link>
+                        </li>
+                      );
+                    }
+                    
+                    return (
+                      <li key={tab.id}>
+                        <button
+                          onClick={() => setSelectedTab(tab.id)}
+                          className={`
+                            w-full flex items-center justify-between px-4 py-3 rounded-lg text-left transition-all duration-200
                             ${selectedTab === tab.id
-                              ? 'bg-white bg-opacity-20 text-white'
-                              : 'bg-neutral-200 text-neutral-600'
+                              ? 'bg-primary-900 text-white shadow-md'
+                              : 'text-neutral-700 hover:bg-neutral-100 hover:text-primary-900'
                             }
-                          `}>
-                            {tab.count}
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  ))}
+                          `}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Icon size={20} />
+                            <span className="font-medium">{tab.label}</span>
+                          </div>
+                          {tab.count > 0 && (
+                            <span className={`
+                              text-xs px-2 py-1 rounded-full
+                              ${selectedTab === tab.id
+                                ? 'bg-white bg-opacity-20 text-white'
+                                : 'bg-neutral-200 text-neutral-600'
+                              }
+                            `}>
+                              {tab.count}
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </nav>
             </Card>
@@ -117,10 +171,12 @@ const CMS: React.FC = () => {
                   <h2 className="text-xl font-bold text-neutral-900">
                     Gestion des {tabs.find(t => t.id === selectedTab)?.label}
                   </h2>
-                  <Button className="flex items-center space-x-2">
-                    <Plus size={20} />
-                    <span>Nouvelle Page</span>
-                  </Button>
+                  <Link to="/admin/cms/editor/new">
+                    <Button className="flex items-center space-x-2">
+                      <Plus size={20} />
+                      <span>Nouvelle Page</span>
+                    </Button>
+                  </Link>
                 </div>
               </div>
 
@@ -209,9 +265,12 @@ const CMS: React.FC = () => {
                             <button className="p-2 text-neutral-600 hover:text-primary-900 hover:bg-primary-50 rounded-lg transition-colors duration-200">
                               <Eye size={16} />
                             </button>
-                            <button className="p-2 text-neutral-600 hover:text-secondary-900 hover:bg-secondary-50 rounded-lg transition-colors duration-200">
+                            <Link 
+                              to={`/admin/cms/editor/${page.id}`}
+                              className="p-2 text-neutral-600 hover:text-secondary-900 hover:bg-secondary-50 rounded-lg transition-colors duration-200"
+                            >
                               <Edit size={16} />
-                            </button>
+                            </Link>
                             <button className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200">
                               <Trash2 size={16} />
                             </button>
