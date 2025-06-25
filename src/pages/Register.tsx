@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
 import Card from '../components/UI/Card';
@@ -43,8 +43,19 @@ const Register: React.FC = () => {
   const steps = ['Type de compte', 'Informations personnelles', 'Sécurité'];
   const totalSteps = steps.length;
 
+  // Debug: Log form data changes
+  useEffect(() => {
+    console.log('FormData updated:', formData);
+  }, [formData]);
+
   const handleFieldChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    console.log(`Changing ${field} to:`, value); // Debug
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      console.log('New formData:', newData); // Debug
+      return newData;
+    });
+    
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -136,20 +147,29 @@ const Register: React.FC = () => {
   const canProceedToNextStep = (): boolean => {
     switch (currentStep) {
       case 1:
-        return !!formData.userType;
+        const hasUserType = !!formData.userType;
+        console.log('Can proceed step 1:', hasUserType, 'userType:', formData.userType); // Debug
+        return hasUserType;
       case 2:
         const requiredFields = getRequiredFieldsForUserType(formData.userType);
-        return requiredFields.every(field => !!formData[field as keyof typeof formData]);
+        const hasAllFields = requiredFields.every(field => !!formData[field as keyof typeof formData]);
+        console.log('Can proceed step 2:', hasAllFields, 'required:', requiredFields); // Debug
+        return hasAllFields;
       case 3:
-        return !!formData.password && !!formData.confirmPassword && formData.acceptTerms === 'true';
+        const hasPassword = !!formData.password && !!formData.confirmPassword && formData.acceptTerms === 'true';
+        console.log('Can proceed step 3:', hasPassword); // Debug
+        return hasPassword;
       default:
         return false;
     }
   };
 
   const handleNext = () => {
+    console.log('Attempting to go to next step, current:', currentStep); // Debug
     if (validateStep(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    } else {
+      console.log('Validation failed for step:', currentStep, 'errors:', errors); // Debug
     }
   };
 
@@ -196,7 +216,10 @@ const Register: React.FC = () => {
         return (
           <UserTypeStep
             selectedType={formData.userType}
-            onTypeSelect={(type) => handleFieldChange('userType', type)}
+            onTypeSelect={(type) => {
+              console.log('UserTypeStep callback called with:', type); // Debug
+              handleFieldChange('userType', type);
+            }}
           />
         );
       case 2:
@@ -230,6 +253,8 @@ const Register: React.FC = () => {
       default: return '';
     }
   };
+
+  const canProceed = canProceedToNextStep();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 flex items-center justify-center py-12 px-4">
@@ -268,6 +293,11 @@ const Register: React.FC = () => {
           {/* Step Content */}
           <div className="min-h-[500px]">
             {renderStepContent()}
+          </div>
+
+          {/* Debug Info (remove in production) */}
+          <div className="mt-4 p-3 bg-gray-100 rounded text-xs text-gray-600">
+            <strong>Debug:</strong> userType: "{formData.userType}", canProceed: {canProceed.toString()}, step: {currentStep}
           </div>
 
           {/* Error Message */}
@@ -322,8 +352,12 @@ const Register: React.FC = () => {
               {currentStep < totalSteps ? (
                 <Button
                   onClick={handleNext}
-                  disabled={!canProceedToNextStep() || isSubmitting}
-                  className="flex items-center space-x-2"
+                  disabled={!canProceed || isSubmitting}
+                  className={`flex items-center space-x-2 ${
+                    canProceed 
+                      ? 'bg-primary-900 hover:bg-primary-800' 
+                      : 'bg-gray-400 cursor-not-allowed'
+                  }`}
                 >
                   <span>Suivant</span>
                   <ArrowRight size={20} />
@@ -332,7 +366,7 @@ const Register: React.FC = () => {
                 <Button
                   onClick={handleSubmit}
                   isLoading={isSubmitting}
-                  disabled={!canProceedToNextStep()}
+                  disabled={!canProceed}
                   className="flex items-center space-x-2"
                 >
                   {isSubmitting ? (
@@ -347,7 +381,7 @@ const Register: React.FC = () => {
               )}
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Footer */}
         <div className="text-center">

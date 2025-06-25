@@ -47,11 +47,23 @@ const UserTypeStep: React.FC<UserTypeStepProps> = ({ selectedType, onTypeSelect 
     }
   ];
 
+  const handleTypeSelect = (typeId: string) => {
+    console.log('Type sélectionné:', typeId); // Debug
+    onTypeSelect(typeId);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-neutral-900">Choisissez votre profil</h2>
         <p className="text-neutral-600">Sélectionnez le type de compte qui correspond à votre situation</p>
+        {selectedType && (
+          <div className="mt-4">
+            <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
+              Type sélectionné : {userTypes.find(t => t.id === selectedType)?.title}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -60,75 +72,90 @@ const UserTypeStep: React.FC<UserTypeStepProps> = ({ selectedType, onTypeSelect 
           const isSelected = selectedType === type.id;
           
           return (
-            <Card
+            <div
               key={type.id}
+              onClick={() => handleTypeSelect(type.id)}
               className={`
-                cursor-pointer transition-all duration-300 hover:shadow-lg transform hover:scale-105
+                cursor-pointer transition-all duration-300 transform hover:scale-105
                 ${isSelected 
-                  ? 'ring-2 ring-primary-500 shadow-lg bg-primary-50 border-primary-200' 
-                  : 'hover:shadow-md border-neutral-200 hover:border-primary-300'
+                  ? 'ring-2 ring-primary-500 shadow-lg' 
+                  : 'hover:shadow-md'
                 }
               `}
-              onClick={() => onTypeSelect(type.id)}
-              padding="lg"
             >
-              <div className="space-y-4">
-                {/* Header */}
-                <div className="flex items-center space-x-4">
-                  <div className={`w-14 h-14 bg-gradient-to-br ${type.color} rounded-xl flex items-center justify-center shadow-md`}>
-                    <Icon size={28} className="text-white" />
+              <Card
+                className={`
+                  h-full border-2 transition-all duration-300
+                  ${isSelected 
+                    ? 'bg-primary-50 border-primary-500' 
+                    : 'border-neutral-200 hover:border-primary-300'
+                  }
+                `}
+                padding="lg"
+              >
+                <div className="space-y-4">
+                  {/* Header */}
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-14 h-14 bg-gradient-to-br ${type.color} rounded-xl flex items-center justify-center shadow-md`}>
+                      <Icon size={28} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className={`text-lg font-bold transition-colors duration-200 ${
+                        isSelected ? 'text-primary-900' : 'text-neutral-900'
+                      }`}>
+                        {type.title}
+                      </h3>
+                      <p className="text-sm text-neutral-600">{type.description}</p>
+                    </div>
+                    {isSelected && (
+                      <div className="w-8 h-8 bg-primary-900 rounded-full flex items-center justify-center animate-pulse">
+                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <h3 className={`text-lg font-bold transition-colors duration-200 ${
-                      isSelected ? 'text-primary-900' : 'text-neutral-900'
-                    }`}>
-                      {type.title}
-                    </h3>
-                    <p className="text-sm text-neutral-600">{type.description}</p>
+
+                  {/* Features */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-neutral-900">Fonctionnalités incluses :</h4>
+                    <ul className="space-y-2">
+                      {type.features.map((feature, index) => (
+                        <li key={index} className="text-sm text-neutral-700 flex items-center space-x-2">
+                          <div className={`w-1.5 h-1.5 rounded-full ${
+                            isSelected ? 'bg-primary-900' : 'bg-neutral-400'
+                          }`}></div>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
+
+                  {/* Requirements */}
+                  <div className={`p-3 rounded-lg border-l-4 ${
+                    isSelected 
+                      ? 'bg-primary-100 border-primary-500' 
+                      : 'bg-neutral-50 border-neutral-300'
+                  }`}>
+                    <p className="text-xs text-neutral-600">
+                      <span className="font-medium">Prérequis :</span> {type.requirements}
+                    </p>
+                  </div>
+
+                  {/* Selection indicator */}
                   {isSelected && (
-                    <div className="w-6 h-6 bg-primary-900 rounded-full flex items-center justify-center animate-pulse">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    <div className="text-center pt-2">
+                      <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-primary-900 text-white shadow-md">
+                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Sélectionné
+                      </span>
                     </div>
                   )}
                 </div>
-
-                {/* Features */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-neutral-900">Fonctionnalités incluses :</h4>
-                  <ul className="space-y-2">
-                    {type.features.map((feature, index) => (
-                      <li key={index} className="text-sm text-neutral-700 flex items-center space-x-2">
-                        <div className={`w-1.5 h-1.5 rounded-full ${
-                          isSelected ? 'bg-primary-900' : 'bg-neutral-400'
-                        }`}></div>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Requirements */}
-                <div className={`p-3 rounded-lg border-l-4 ${
-                  isSelected 
-                    ? 'bg-primary-50 border-primary-500' 
-                    : 'bg-neutral-50 border-neutral-300'
-                }`}>
-                  <p className="text-xs text-neutral-600">
-                    <span className="font-medium">Prérequis :</span> {type.requirements}
-                  </p>
-                </div>
-
-                {/* Selection indicator */}
-                {isSelected && (
-                  <div className="text-center">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-900 text-white">
-                      ✓ Sélectionné
-                    </span>
-                  </div>
-                )}
-              </div>
-            </Card>
+              </Card>
+            </div>
           );
         })}
       </div>
@@ -136,7 +163,10 @@ const UserTypeStep: React.FC<UserTypeStepProps> = ({ selectedType, onTypeSelect 
       {/* Help text */}
       <div className="text-center">
         <p className="text-sm text-neutral-500">
-          Vous pourrez modifier certaines informations après la création de votre compte
+          {selectedType 
+            ? "Parfait ! Cliquez sur 'Suivant' pour continuer votre inscription."
+            : "Cliquez sur une carte pour sélectionner votre type de compte"
+          }
         </p>
       </div>
     </div>
