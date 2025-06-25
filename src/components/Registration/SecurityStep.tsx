@@ -93,20 +93,20 @@ const SecurityStep: React.FC<SecurityStepProps> = ({ formData, onChange, errors 
 
         {/* Password Requirements */}
         {formData.password && (
-          <div className="bg-neutral-50 p-4 rounded-lg">
+          <div className="bg-neutral-50 p-4 rounded-lg border border-neutral-200">
             <h4 className="text-sm font-medium text-neutral-900 mb-3 flex items-center space-x-2">
               <Shield size={16} />
               <span>Exigences du mot de passe</span>
             </h4>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {passwordRequirements.map((requirement, index) => {
                 const isValid = requirement.test(formData.password);
                 return (
                   <div key={index} className="flex items-center space-x-2">
                     {isValid ? (
-                      <Check size={16} className="text-green-600" />
+                      <Check size={16} className="text-green-600 flex-shrink-0" />
                     ) : (
-                      <X size={16} className="text-red-500" />
+                      <X size={16} className="text-red-500 flex-shrink-0" />
                     )}
                     <span className={`text-sm ${isValid ? 'text-green-600' : 'text-neutral-600'}`}>
                       {requirement.text}
@@ -149,6 +149,23 @@ const SecurityStep: React.FC<SecurityStepProps> = ({ formData, onChange, errors 
           {errors.confirmPassword && (
             <p className="text-sm text-red-600">{errors.confirmPassword}</p>
           )}
+
+          {/* Password match indicator */}
+          {formData.password && formData.confirmPassword && (
+            <div className="flex items-center space-x-2">
+              {formData.password === formData.confirmPassword ? (
+                <>
+                  <Check size={16} className="text-green-600" />
+                  <span className="text-sm text-green-600">Les mots de passe correspondent</span>
+                </>
+              ) : (
+                <>
+                  <X size={16} className="text-red-500" />
+                  <span className="text-sm text-red-500">Les mots de passe ne correspondent pas</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Terms and Conditions */}
@@ -157,29 +174,32 @@ const SecurityStep: React.FC<SecurityStepProps> = ({ formData, onChange, errors 
             <input
               type="checkbox"
               id="terms"
-              checked={formData.acceptTerms || false}
+              checked={formData.acceptTerms === 'true'}
               onChange={(e) => onChange('acceptTerms', e.target.checked.toString())}
               className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
               required
             />
             <label htmlFor="terms" className="text-sm text-neutral-700">
               J'accepte les{' '}
-              <a href="/terms" className="text-primary-900 hover:text-primary-700 underline">
+              <a href="/terms" target="_blank" className="text-primary-900 hover:text-primary-700 underline">
                 conditions d'utilisation
               </a>{' '}
               et la{' '}
-              <a href="/privacy" className="text-primary-900 hover:text-primary-700 underline">
+              <a href="/privacy" target="_blank" className="text-primary-900 hover:text-primary-700 underline">
                 politique de confidentialité
               </a>{' '}
               de l'ESST <span className="text-red-500">*</span>
             </label>
           </div>
+          {errors.acceptTerms && (
+            <p className="text-sm text-red-600 ml-7">{errors.acceptTerms}</p>
+          )}
 
           <div className="flex items-start space-x-3">
             <input
               type="checkbox"
               id="newsletter"
-              checked={formData.acceptNewsletter || false}
+              checked={formData.acceptNewsletter === 'true'}
               onChange={(e) => onChange('acceptNewsletter', e.target.checked.toString())}
               className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
             />
@@ -187,6 +207,16 @@ const SecurityStep: React.FC<SecurityStepProps> = ({ formData, onChange, errors 
               Je souhaite recevoir les actualités et informations de l'ESST par email
             </label>
           </div>
+        </div>
+
+        {/* Security Tips */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-blue-900 mb-2">💡 Conseils de sécurité</h4>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li>• Utilisez un mot de passe unique pour votre compte ESST</li>
+            <li>• Ne partagez jamais vos identifiants avec d'autres personnes</li>
+            <li>• Déconnectez-vous toujours après utilisation sur un ordinateur partagé</li>
+          </ul>
         </div>
       </div>
     </div>

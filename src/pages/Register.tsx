@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
 import Card from '../components/UI/Card';
 import Button from '../components/UI/Button';
 import ProgressBar from '../components/UI/ProgressBar';
@@ -14,12 +14,29 @@ const Register: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     userType: '',
-    // Personal info will be added dynamically based on user type
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    birthDate: '',
+    // User type specific fields
+    department: '',
+    position: '',
+    employeeId: '',
+    specialization: '',
+    studentId: '',
+    program: '',
+    year: '',
+    address: '',
+    organization: '',
+    interest: '',
+    purpose: '',
+    bio: '',
     // Security
     password: '',
     confirmPassword: '',
-    acceptTerms: false,
-    acceptNewsletter: false,
+    acceptTerms: '',
+    acceptNewsletter: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -57,14 +74,30 @@ const Register: React.FC = () => {
         if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
           newErrors.email = 'Adresse email invalide';
         }
+
+        // Phone validation (optional but if provided, should be valid)
+        if (formData.phone && !/^[\+]?[0-9\s\-\(\)]{10,}$/.test(formData.phone)) {
+          newErrors.phone = 'Numéro de téléphone invalide';
+        }
         break;
 
       case 3:
         // Password validation
         if (!formData.password) {
           newErrors.password = 'Le mot de passe est obligatoire';
-        } else if (formData.password.length < 8) {
-          newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères';
+        } else {
+          const passwordRequirements = [
+            { test: (pwd: string) => pwd.length >= 8, message: 'Au moins 8 caractères' },
+            { test: (pwd: string) => /[A-Z]/.test(pwd), message: 'Une lettre majuscule' },
+            { test: (pwd: string) => /[a-z]/.test(pwd), message: 'Une lettre minuscule' },
+            { test: (pwd: string) => /\d/.test(pwd), message: 'Un chiffre' },
+            { test: (pwd: string) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd), message: 'Un caractère spécial' },
+          ];
+
+          const failedRequirements = passwordRequirements.filter(req => !req.test(formData.password));
+          if (failedRequirements.length > 0) {
+            newErrors.password = `Le mot de passe doit contenir : ${failedRequirements.map(req => req.message).join(', ')}`;
+          }
         }
 
         if (!formData.confirmPassword) {
@@ -73,7 +106,7 @@ const Register: React.FC = () => {
           newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
         }
 
-        if (!formData.acceptTerms) {
+        if (formData.acceptTerms !== 'true') {
           newErrors.acceptTerms = 'Vous devez accepter les conditions d\'utilisation';
         }
         break;
@@ -100,6 +133,20 @@ const Register: React.FC = () => {
     }
   };
 
+  const canProceedToNextStep = (): boolean => {
+    switch (currentStep) {
+      case 1:
+        return !!formData.userType;
+      case 2:
+        const requiredFields = getRequiredFieldsForUserType(formData.userType);
+        return requiredFields.every(field => !!formData[field as keyof typeof formData]);
+      case 3:
+        return !!formData.password && !!formData.confirmPassword && formData.acceptTerms === 'true';
+      default:
+        return false;
+    }
+  };
+
   const handleNext = () => {
     if (validateStep(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, totalSteps));
@@ -118,18 +165,26 @@ const Register: React.FC = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Here you would normally send the data to your backend
-      console.log('Registration data:', formData);
+      // Create user object
+      const userData = {
+        ...formData,
+        id: Date.now().toString(),
+        createdAt: new Date(),
+        isOnline: false,
+      };
       
-      // Redirect to success page or login
+      console.log('Registration data:', userData);
+      
+      // Show success message and redirect
       navigate('/login', { 
         state: { 
-          message: 'Inscription réussie ! Vous pouvez maintenant vous connecter.' 
+          message: 'Inscription réussie ! Vous pouvez maintenant vous connecter.',
+          email: formData.email
         }
       });
     } catch (error) {
       console.error('Erreur lors de l\'inscription:', error);
-      setErrors({ submit: 'Une erreur est survenue lors de l\'inscription' });
+      setErrors({ submit: 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -166,6 +221,16 @@ const Register: React.FC = () => {
     }
   };
 
+  const getUserTypeLabel = (type: string) => {
+    switch (type) {
+      case 'admin': return 'Administrateur';
+      case 'teacher': return 'Enseignant';
+      case 'student': return 'Étudiant';
+      case 'visitor': return 'Visiteur';
+      default: return '';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 flex items-center justify-center py-12 px-4">
       <div className="max-w-4xl w-full space-y-8">
@@ -182,6 +247,13 @@ const Register: React.FC = () => {
           <p className="mt-2 text-white opacity-80">
             Créez votre compte pour accéder à la plateforme collaborative
           </p>
+          {formData.userType && (
+            <div className="mt-4">
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white bg-opacity-20 text-white">
+                Inscription en tant que {getUserTypeLabel(formData.userType)}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Registration Form */}
@@ -194,14 +266,27 @@ const Register: React.FC = () => {
           />
 
           {/* Step Content */}
-          <div className="min-h-[400px]">
+          <div className="min-h-[500px]">
             {renderStepContent()}
           </div>
 
           {/* Error Message */}
           {errors.submit && (
-            <div className="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {errors.submit}
+            <div className="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center space-x-2">
+              <AlertCircle size={20} />
+              <span>{errors.submit}</span>
+            </div>
+          )}
+
+          {/* Validation Summary */}
+          {Object.keys(errors).length > 0 && !errors.submit && (
+            <div className="mt-6 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+              <p className="font-medium mb-2">Veuillez corriger les erreurs suivantes :</p>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                {Object.entries(errors).map(([field, error]) => (
+                  <li key={field}>{error}</li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -213,6 +298,7 @@ const Register: React.FC = () => {
                   variant="ghost"
                   onClick={handlePrevious}
                   className="flex items-center space-x-2"
+                  disabled={isSubmitting}
                 >
                   <ArrowLeft size={20} />
                   <span>Précédent</span>
@@ -227,11 +313,16 @@ const Register: React.FC = () => {
               )}
             </div>
 
-            <div>
+            <div className="flex items-center space-x-4">
+              {/* Step indicator */}
+              <span className="text-sm text-neutral-500">
+                Étape {currentStep} sur {totalSteps}
+              </span>
+
               {currentStep < totalSteps ? (
                 <Button
                   onClick={handleNext}
-                  disabled={currentStep === 1 && !formData.userType}
+                  disabled={!canProceedToNextStep() || isSubmitting}
                   className="flex items-center space-x-2"
                 >
                   <span>Suivant</span>
@@ -241,6 +332,7 @@ const Register: React.FC = () => {
                 <Button
                   onClick={handleSubmit}
                   isLoading={isSubmitting}
+                  disabled={!canProceedToNextStep()}
                   className="flex items-center space-x-2"
                 >
                   {isSubmitting ? (

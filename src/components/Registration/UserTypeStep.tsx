@@ -15,7 +15,8 @@ const UserTypeStep: React.FC<UserTypeStepProps> = ({ selectedType, onTypeSelect 
       description: 'Gestion complète de la plateforme et des utilisateurs',
       icon: User,
       color: 'from-primary-900 to-primary-700',
-      features: ['Gestion des utilisateurs', 'Administration système', 'Contrôle total']
+      features: ['Gestion des utilisateurs', 'Administration système', 'Contrôle total'],
+      requirements: 'Accès réservé au personnel autorisé'
     },
     {
       id: 'teacher',
@@ -23,7 +24,8 @@ const UserTypeStep: React.FC<UserTypeStepProps> = ({ selectedType, onTypeSelect 
       description: 'Création de cours, gestion des étudiants et projets',
       icon: BookOpen,
       color: 'from-secondary-900 to-secondary-700',
-      features: ['Création de cours', 'Gestion des étudiants', 'Supervision de projets']
+      features: ['Création de cours', 'Gestion des étudiants', 'Supervision de projets'],
+      requirements: 'Personnel enseignant de l\'ESST'
     },
     {
       id: 'student',
@@ -31,7 +33,8 @@ const UserTypeStep: React.FC<UserTypeStepProps> = ({ selectedType, onTypeSelect 
       description: 'Accès aux cours, participation aux projets collaboratifs',
       icon: GraduationCap,
       color: 'from-success-900 to-success-700',
-      features: ['Accès aux cours', 'Projets collaboratifs', 'Ressources pédagogiques']
+      features: ['Accès aux cours', 'Projets collaboratifs', 'Ressources pédagogiques'],
+      requirements: 'Étudiant inscrit à l\'ESST'
     },
     {
       id: 'visitor',
@@ -39,7 +42,8 @@ const UserTypeStep: React.FC<UserTypeStepProps> = ({ selectedType, onTypeSelect 
       description: 'Découverte des formations et informations générales',
       icon: Eye,
       color: 'from-accent-900 to-accent-700',
-      features: ['Catalogue formations', 'Informations générales', 'Demandes de renseignements']
+      features: ['Catalogue formations', 'Informations générales', 'Demandes de renseignements'],
+      requirements: 'Ouvert à tous les visiteurs'
     }
   ];
 
@@ -59,10 +63,10 @@ const UserTypeStep: React.FC<UserTypeStepProps> = ({ selectedType, onTypeSelect 
             <Card
               key={type.id}
               className={`
-                cursor-pointer transition-all duration-200 hover:shadow-lg
+                cursor-pointer transition-all duration-300 hover:shadow-lg transform hover:scale-105
                 ${isSelected 
-                  ? 'ring-2 ring-primary-500 shadow-lg' 
-                  : 'hover:shadow-md'
+                  ? 'ring-2 ring-primary-500 shadow-lg bg-primary-50 border-primary-200' 
+                  : 'hover:shadow-md border-neutral-200 hover:border-primary-300'
                 }
               `}
               onClick={() => onTypeSelect(type.id)}
@@ -71,36 +75,69 @@ const UserTypeStep: React.FC<UserTypeStepProps> = ({ selectedType, onTypeSelect 
               <div className="space-y-4">
                 {/* Header */}
                 <div className="flex items-center space-x-4">
-                  <div className={`w-12 h-12 bg-gradient-to-br ${type.color} rounded-xl flex items-center justify-center`}>
-                    <Icon size={24} className="text-white" />
+                  <div className={`w-14 h-14 bg-gradient-to-br ${type.color} rounded-xl flex items-center justify-center shadow-md`}>
+                    <Icon size={28} className="text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-neutral-900">{type.title}</h3>
+                    <h3 className={`text-lg font-bold transition-colors duration-200 ${
+                      isSelected ? 'text-primary-900' : 'text-neutral-900'
+                    }`}>
+                      {type.title}
+                    </h3>
                     <p className="text-sm text-neutral-600">{type.description}</p>
                   </div>
                   {isSelected && (
-                    <div className="w-6 h-6 bg-primary-900 rounded-full flex items-center justify-center">
+                    <div className="w-6 h-6 bg-primary-900 rounded-full flex items-center justify-center animate-pulse">
                       <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
                   )}
                 </div>
 
                 {/* Features */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-neutral-900">Fonctionnalités incluses :</h4>
-                  <ul className="space-y-1">
+                  <ul className="space-y-2">
                     {type.features.map((feature, index) => (
                       <li key={index} className="text-sm text-neutral-700 flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-primary-900 rounded-full"></div>
+                        <div className={`w-1.5 h-1.5 rounded-full ${
+                          isSelected ? 'bg-primary-900' : 'bg-neutral-400'
+                        }`}></div>
                         <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
+
+                {/* Requirements */}
+                <div className={`p-3 rounded-lg border-l-4 ${
+                  isSelected 
+                    ? 'bg-primary-50 border-primary-500' 
+                    : 'bg-neutral-50 border-neutral-300'
+                }`}>
+                  <p className="text-xs text-neutral-600">
+                    <span className="font-medium">Prérequis :</span> {type.requirements}
+                  </p>
+                </div>
+
+                {/* Selection indicator */}
+                {isSelected && (
+                  <div className="text-center">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-900 text-white">
+                      ✓ Sélectionné
+                    </span>
+                  </div>
+                )}
               </div>
             </Card>
           );
         })}
+      </div>
+
+      {/* Help text */}
+      <div className="text-center">
+        <p className="text-sm text-neutral-500">
+          Vous pourrez modifier certaines informations après la création de votre compte
+        </p>
       </div>
     </div>
   );

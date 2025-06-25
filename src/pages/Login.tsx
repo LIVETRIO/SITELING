@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Eye, EyeOff, Lock, Mail, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/UI/Button';
 import Card from '../components/UI/Card';
@@ -11,9 +11,23 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for success message from registration
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      if (location.state?.email) {
+        setEmail(location.state.email);
+      }
+      // Clear the state to prevent showing the message on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +72,16 @@ const Login: React.FC = () => {
             Accédez à votre espace personnel
           </p>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <Card className="bg-green-50 border border-green-200">
+            <div className="flex items-center space-x-3 text-green-700">
+              <CheckCircle size={20} />
+              <p className="font-medium">{successMessage}</p>
+            </div>
+          </Card>
+        )}
 
         {/* Login Form */}
         <Card className="bg-white shadow-2xl">
