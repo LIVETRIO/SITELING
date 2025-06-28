@@ -48,7 +48,6 @@ const UserTypeStep: React.FC<UserTypeStepProps> = ({ selectedType, onTypeSelect 
   ];
 
   const handleTypeSelect = (typeId: string) => {
-    console.log('Type sélectionné:', typeId); // Debug
     onTypeSelect(typeId);
   };
 
